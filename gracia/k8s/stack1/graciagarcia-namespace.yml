@@ -1,0 +1,24 @@
+# ========================================
+# STACK 1 - NAMESPACE
+# ========================================
+# Archivo: gracia/k8s/stack1/graciagarcia-namespace.yml
+# Descripción: Crea un espacio de trabajo aislado en Kubernetes
+# 
+# COMANDO PARA APLICAR:
+# kubectl apply -f k8s/stack1/graciagarcia-namespace.yml
+#
+# COMANDO PARA VERIFICAR:
+# kubectl get namespace graciagarcia-namespace
+# kubectl describe namespace graciagarcia-namespace
+# ========================================
+
+apiVersion: v1                          # Versión de la API de Kubernetes
+kind: Namespace                         # Tipo de recurso: Namespace (espacio de trabajo)
+metadata:                               # Metadatos del namespace
+  name: graciagarcia-namespace          # Nombre del namespace (tu espacio de trabajo)
+  labels:                               # Etiquetas para identificar el namespace
+    name: graciagarcia-namespace        # Etiqueta con el nombre
+    environment: development            # Entorno: desarrollo
+    owner: graciagarcia                 # Propietario: graciagarcia
+    promotion: AS232                    # Número de promoción
+    order: "03"                         # Número de orden

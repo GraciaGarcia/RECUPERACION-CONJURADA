@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # ========================================
+  # SERVICIO 1: Aplicacion Spring Boot
+  # Puerto: 8091
+  # ========================================
+  app:
+    image: 60071325/ht-232-03-gracia-garcia:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    container_name: gracia-app
+    ports:
+      - "8091:8090"
+    environment:
+      - PORT=8090
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:testdb
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=
+    networks:
+      - gracia-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8090/v1/api/student"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ========================================
+  # SERVICIO 2: MySQL
+  # Puerto: 3306
+  # ========================================
+  mysql:
+    image: mysql:8.0
+    container_name: gracia-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_DATABASE=graciadb
+      - MYSQL_USER=graciauser
+      - MYSQL_PASSWORD=graciapass
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - gracia-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # SERVICIO 3: Nginx
+  # Puerto: 8092
+  # ========================================
+  nginx:
+    image: nginx:alpine
+    container_name: gracia-nginx
+    ports:
+      - "8092:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - gracia-network
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  gracia-network:
+    driver: bridge
+
+volumes:
+  mysql-data:

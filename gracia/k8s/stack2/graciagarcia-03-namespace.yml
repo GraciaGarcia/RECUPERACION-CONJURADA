@@ -1,0 +1,23 @@
+# ========================================
+# STACK 2 - NAMESPACE
+# ========================================
+# Archivo: gracia/k8s/stack2/graciagarcia-03-namespace.yml
+# Descripción: Crea un espacio de trabajo aislado para Stack 2
+# 
+# COMANDO PARA APLICAR:
+# kubectl apply -f k8s/stack2/graciagarcia-03-namespace.yml
+#
+# COMANDO PARA VERIFICAR:
+# kubectl get namespace graciagarcia-03-namespace
+# kubectl describe namespace graciagarcia-03-namespace
+# ========================================
+
+apiVersion: v1                          # Versión de la API de Kubernetes
+kind: Namespace                         # Tipo de recurso: Namespace
+metadata:                               # Metadatos del namespace
+  name: graciagarcia-03-namespace       # Nombre del namespace Stack 2
+  labels:                               # Etiquetas para identificar
+    name: graciagarcia-03-namespace     # Etiqueta con el nombre
+    environment: production             # Entorno: producción
+    owner: graciagarcia                 # Propietario: graciagarcia
+    order: "03"                         # Número de orden

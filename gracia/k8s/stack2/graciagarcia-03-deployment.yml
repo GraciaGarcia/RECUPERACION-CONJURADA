@@ -1,0 +1,84 @@
+# ========================================
+# STACK 2 - DEPLOYMENT (con Secret)
+# ========================================
+# Archivo: gracia/k8s/stack2/graciagarcia-03-deployment.yml
+# Descripción: Despliega 3 réplicas usando puerto 9090 desde Secret
+# 
+# COMANDO PARA APLICAR:
+# kubectl apply -f k8s/stack2/graciagarcia-03-deployment.yml
+#
+# COMANDOS PARA VERIFICAR:
+# kubectl get deployment -n graciagarcia-03-namespace
+# kubectl get pods -n graciagarcia-03-namespace
+# kubectl describe deployment graciagarcia-03-deployment -n graciagarcia-03-namespace
+# kubectl logs -n graciagarcia-03-namespace -l app=graciagarcia-03-app --tail=50
+#
+# VERIFICAR PUERTO 9090:
+# Buscar en logs: "Tomcat started on port 9090" y "nio-9090-exec"
+# ========================================
+
+apiVersion: apps/v1                     # Versión de la API de Kubernetes
+kind: Deployment                        # Tipo de recurso: Deployment
+metadata:                               # Metadatos del deployment
+  name: graciagarcia-03-deployment      # Nombre del deployment Stack 2
+  namespace: graciagarcia-03-namespace  # Namespace Stack 2
+  labels:                               # Etiquetas del deployment
+    app: graciagarcia-03-app            # Etiqueta de la aplicación Stack 2
+    version: v1                         # Versión
+    owner: graciagarcia                 # Propietario
+spec:                                   # Especificación del deployment
+  replicas: 3                           # Número de réplicas: 3
+  selector:                               # Selector para identificar los pods
+    matchLabels:                        # Etiquetas que deben coincidir
+      app: graciagarcia-03-app          # Selecciona pods Stack 2
+  template:                             # Plantilla para crear los pods
+    metadata:                           # Metadatos de los pods
+      labels:                           # Etiquetas de los pods
+        app: graciagarcia-03-app        # Etiqueta Stack 2
+        version: v1                     # Versión
+    spec:                               # Especificación de los pods
+      containers:                       # Lista de contenedores
+      - name: graciagarcia-03-container # Nombre del contenedor principal Stack 2
+        image: 60071325/ht-03-gracia-garcia:latest  # Imagen de Docker Hub Stack 2
+        imagePullPolicy: Always         # Siempre descargar la última versión
+        ports:                          # Puertos expuestos
+        - containerPort: 9090           # Puerto interno: 9090 (desde Secret)
+          name: http                    # Nombre del puerto
+          protocol: TCP                 # Protocolo TCP
+        envFrom:                        # Cargar variables de entorno DESDE:
+        - secretRef:                    # Referencia a un Secret
+            name: graciagarcia-03-secret  # Nombre del Secret (contiene PORT=9090)
+        resources:                          # Recursos del contenedor
+          requests:                     # Recursos mínimos solicitados
+            memory: "256Mi"             # Memoria mínima: 256 MB
+            cpu: "250m"                 # CPU mínima: 0.25 cores
+          limits:                       # Límites máximos de recursos
+            memory: "512Mi"             # Memoria máxima: 512 MB
+            cpu: "500m"                 # CPU máxima: 0.5 cores
+        livenessProbe:                  # Verifica si el contenedor está vivo
+          httpGet:                      # Hace una petición HTTP
+            path: /v1/api/student       # Endpoint a verificar
+            port: 9090                  # Puerto 9090 (desde Secret)
+          initialDelaySeconds: 60       # Espera 60s antes de la primera verificación
+          periodSeconds: 10             # Verifica cada 10 segundos
+          timeoutSeconds: 5             # Timeout de 5 segundos
+          failureThreshold: 3           # Reinicia después de 3 fallos
+        readinessProbe:                 # Verifica si el contenedor está listo
+          httpGet:                      # Hace una petición HTTP
+            path: /v1/api/student       # Endpoint a verificar
+            port: 9090                  # Puerto 9090 (desde Secret)
+          initialDelaySeconds: 30       # Espera 30s antes de la primera verificación
+          periodSeconds: 5              # Verifica cada 5 segundos
+          timeoutSeconds: 3             # Timeout de 3 segundos
+          failureThreshold: 3           # Marca como no listo después de 3 fallos
+      - name: busybox-sidecar           # Contenedor sidecar (segundo contenedor)
+        image: busybox:latest           # Imagen ligera de busybox
+        command: ['sh', '-c', 'while true; do echo "Sidecar running..."; sleep 30; done']
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "50m"
+          limits:
+            memory: "64Mi"
+            cpu: "100m"
+      restartPolicy: Always             # Siempre reiniciar el pod si falla

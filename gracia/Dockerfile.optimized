@@ -1,0 +1,78 @@
+# ========================================
+# DOCKERFILE OPTIMIZADO PARA <60MB
+# Imagen final: scratch (sin SO base)
+# Usuario: no-root
+# ========================================
+
+# ========================================
+# STAGE 1: Build con Maven
+# ========================================
+FROM eclipse-temurin:17-jdk-alpine AS builder
+
+WORKDIR /app
+
+# Copiar archivos de Maven
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+
+# Dar permisos de ejecucion
+RUN chmod +x mvnw
+
+# Descargar dependencias
+RUN ./mvnw dependency:go-offline -B
+
+# Copiar codigo fuente
+COPY src src
+
+# Compilar y empaquetar
+RUN ./mvnw clean package -DskipTests
+
+# Extraer JAR en capas
+RUN mkdir -p target/dependency && \
+    cd target/dependency && \
+    jar -xf ../*.jar
+
+# ========================================
+# STAGE 2: Crear JRE personalizado con jlink
+# ========================================
+FROM eclipse-temurin:17-jdk-alpine AS jre-builder
+
+# Crear JRE minimo con solo los modulos necesarios
+RUN jlink \
+    --add-modules java.base,java.logging,java.xml,java.naming,java.desktop,java.management,java.sql,java.instrument \
+    --strip-debug \
+    --no-man-pages \
+    --no-header-files \
+    --compress=2 \
+    --output /jre-minimal
+
+# ========================================
+# STAGE 3: Imagen final con distroless (alternativa a scratch)
+# ========================================
+FROM gcr.io/distroless/base-debian11
+
+# Copiar JRE minimo
+COPY --from=jre-builder /jre-minimal /opt/jre
+
+# Copiar aplicacion
+COPY --from=builder /app/target/dependency/BOOT-INF/lib /app/lib
+COPY --from=builder /app/target/dependency/META-INF /app/META-INF
+COPY --from=builder /app/target/dependency/BOOT-INF/classes /app
+
+# Usuario no-root (distroless usa UID 65532 por defecto)
+USER 65532:65532
+
+WORKDIR /app
+
+# Exponer puerto
+EXPOSE 8090
+
+# Variables de entorno
+ENV JAVA_HOME=/opt/jre
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+ENV JAVA_OPTS="-Xms64m -Xmx128m -XX:+UseSerialGC -Djava.security.egd=file:/dev/./urandom"
+
+# Comando de inicio
+ENTRYPOINT ["/opt/jre/bin/java"]
+CMD ["-cp", "/app:/app/lib/*", "com.example.gracia.GraciaApplication"]

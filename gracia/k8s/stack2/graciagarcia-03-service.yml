@@ -1,0 +1,37 @@
+# ========================================
+# STACK 2 - SERVICE (NodePort)
+# ========================================
+# Archivo: gracia/k8s/stack2/graciagarcia-03-service.yml
+# Descripción: Expone la aplicación Stack 2 al exterior
+# 
+# COMANDO PARA APLICAR:
+# kubectl apply -f k8s/stack2/graciagarcia-03-service.yml
+#
+# COMANDOS PARA VERIFICAR:
+# kubectl get service -n graciagarcia-03-namespace
+# kubectl describe service graciagarcia-03-service -n graciagarcia-03-namespace
+# curl http://localhost:30903/v1/api/student
+#
+# ACCESO:
+# http://localhost:30903/v1/api/student
+# ========================================
+
+apiVersion: v1                          # Versión de la API de Kubernetes
+kind: Service                           # Tipo de recurso: Service
+metadata:                               # Metadatos del service
+  name: graciagarcia-03-service         # Nombre del service Stack 2
+  namespace: graciagarcia-03-namespace  # Namespace Stack 2
+  labels:                               # Etiquetas del service
+    app: graciagarcia-03-app            # Etiqueta Stack 2
+    owner: graciagarcia                 # Propietario
+spec:                                   # Especificación del service
+  type: NodePort                        # Tipo: NodePort (expone puerto en el nodo)
+  selector:                             # Selector para encontrar los pods
+    app: graciagarcia-03-app            # Selecciona pods Stack 2
+  ports:                                # Configuración de puertos
+  - name: http                          # Nombre del puerto
+    protocol: TCP                       # Protocolo TCP
+    port: 80                            # Puerto del service (interno)
+    targetPort: 9090                    # Puerto del contenedor (9090 desde Secret)
+    nodePort: 30903                     # Puerto externo Stack 2 (acceso localhost)
+  sessionAffinity: None                 # Sin afinidad de sesión

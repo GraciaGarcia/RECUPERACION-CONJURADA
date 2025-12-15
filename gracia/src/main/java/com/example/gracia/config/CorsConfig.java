@@ -1,0 +1,36 @@
+package com.example.gracia.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+
+import java.util.Arrays;
+
+/**
+ * Configuracion de CORS para permitir peticiones desde el frontend
+ */
+@Configuration
+public class CorsConfig {
+
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        
+        // Permitir peticiones desde cualquier origen (para desarrollo)
+        config.setAllowCredentials(true);
+        config.addAllowedOriginPattern("*");
+        
+        // Permitir todos los headers
+        config.addAllowedHeader("*");
+        
+        // Permitir todos los metodos HTTP
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        
+        return new CorsFilter(source);
+    }
+}
